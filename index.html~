@@ -15,12 +15,12 @@
 
     <header>
       <div class="container">
-        <h1>Csbio220.GitHub.io</h1>
-        <h2>CSBIO 技术笔记</h2>
+        <h1>CSBIO 技术笔记（一）</h1>
+        <h2>MPI Cluster Using Guide</h2>
 
         <section id="downloads">
-          <a href="https://github.com/Docurdt/csbio220.github.io/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/Docurdt/csbio220.github.io/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="http://hpclab.cs.tsinghua.edu.cn/~duzh/book/mpi.pdf" class="btn">并行编程 MPI PDF</a>
+          <a href="http://www.ll.mit.edu/mission/cybersec/softwaretools/matlabmpi/matlabmpi.html" class="btn">MatlabMPI</a>
           <a href="https://github.com/Docurdt/csbio220.github.io" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -29,31 +29,69 @@
     <div class="container">
       <section id="main_content">
         <h3>
-<a id="Welcome-to-github-pages" class="anchor" href="#Welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>CSBIO MPI Cluster Using Guide.</h3>
+<a id="main-contents" class="anchor" href="#main-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>主要内容</h3>
 
-<p>CSBIO automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>这篇笔记对MPI并行编程和PBS任务管理系统的使用做简单的介绍，这篇笔记的书写离不开都志辉老师编写的《高性能计算之并行编程技术》以及Parallel Programming with MatlabMPI(by Dr. Jeremy Kepner), 在此向他们表示感谢！
+书写过程中难免有错误的地方，欢迎大家fork my repo。下面是笔记的主要内容:</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<pre><code>1. 什么是MPI？
+2. First MPI programme for C or C++（Hello world！）；
+3. First MPI programme for matlab（Hello world！）；
+4. 使用PBS提交任务；
+5. 任务查看及管理；
+6. 其他。
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
 
 <h3>
-<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a id="what-is-mpi" class="anchor" href="#what-is-mpi" aria-hidden="true"><span class="octicon octicon-link"></span></a>1. 什么是MPI？</h3>
+
+<p>对MPI的定义是多种多样的，但不外乎下面三个方面，它们限定了MPI的内涵和外延。</p>
+<p>----MPI是一个库，而不是一门语言。许多人认为MPI就是一种并行语言这是不准确的，但是按照并行语言的分类，可以把FORTRAN+MPI或C+MPI，看作是一种在原来串行语言基础之上扩展后得到的并行语言。MPI库可以被FORTRAN77/C/Fortran90/C++调用，从语法上说，它遵守所有对库函数/过程的调用规则，和一般的函数/过程没有什么区别。</p>
+<p>----MPI是一种标准或规范的代表，而不特指某一个对它的具体实现。迄今为止，所有的并行计算机制造商都提供对MPI的支持，可以在网上免费得到MPI在不同并行计算机上的实现。一个正确的MPI程序，可以不加修改地在所有的并行机上运行。</p>
+<p>----MPI是一种消息传递编程模型，并成为这种编程模型的代表和事实上的标准。MPI虽然很庞大，但是它的最终目的是服务于进程间通信这一目标的。</p>
+<p>在MPI上很容易移植其它的并行代码，而且编程者不需要去努力掌握许多其它的全新概念，就可以学习编写MPI程序。当然，这并不意味着MPI已经十分完美，必须承认MPI自身还存在着一些缺点。</p>
+<p>消息传递方式是广泛应用于多类并行机的一种模式,特别是那些分布存储并行机。尽管在具体的实现上有许多不同, 但通过消息完成进程通信的基本概念是容易理解的 十多年来，这种模式在重要的计算应用中已取得了实质进步，有效和可移植地实现一个消息传递系统是可行的。因此，通过定义核心库程序的语法、语义，这将在大范围计算机上可有效实现将有益于广大用户，这是MPI产生的重要原因。</p>
+
+
+<h3>
+<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. First MPI programme for C or C++（Hello world！）</h3>
 
 <p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
 
+
+
+
 <h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. First MPI programme for matlab（Hello world！）</h3>
+
+<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+
+
+
+
+<h3>
+<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>4. 使用PBS提交任务</h3>
+
+<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+
+
+<h3>
+<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
 
 <p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
 
 <h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+
+
+
+
+
+
+
 
 <h3>
 <a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
