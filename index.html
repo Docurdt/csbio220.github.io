@@ -21,6 +21,8 @@
         <section id="downloads">
           <a href="http://hpclab.cs.tsinghua.edu.cn/~duzh/book/mpi.pdf" class="btn">并行编程 MPI PDF</a>
           <a href="http://www.ll.mit.edu/mission/cybersec/softwaretools/matlabmpi/matlabmpi.html" class="btn">MatlabMPI</a>
+	  <a href="http://www.ssc.net.cn/files/MPI%E7%BC%96%E7%A8%8B%E5%88%9D%E6%AD%A5.pdf" class="btn">MPI并行编程初步（张丹丹）</a>
+          <a href="http://hydro.igsnrr.ac.cn/data/resources/PBS.pdf" class="btn">PBS脚本编写使用</a>
           <a href="https://github.com/Docurdt/csbio220.github.io" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -31,7 +33,7 @@
         <h3>
 <a id="main-contents" class="anchor" href="#main-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>主要内容</h3>
 
-<p>这篇笔记对MPI并行编程和PBS任务管理系统的使用做简单的介绍，这篇笔记的书写离不开都志辉老师编写的《高性能计算之并行编程技术》以及Parallel Programming with MatlabMPI(by Dr. Jeremy Kepner), 在此向他们表示感谢！
+<p>这篇笔记对MPI并行编程和PBS任务管理系统的使用做简单的介绍，这篇笔记的书写离不开都志辉博士编写的《高性能计算之并行编程技术》以及Parallel Programming with MatlabMPI(by Dr. Jeremy Kepner), 在此向他们表示感谢！
 书写过程中难免有错误的地方，欢迎大家fork my repo。下面是笔记的主要内容:</p>
 
 <pre><code>1. 什么是MPI？
@@ -39,7 +41,7 @@
 3. First MPI programme for matlab（Hello world！）；
 4. 使用PBS提交任务；
 5. 任务查看及管理；
-6. 其他。
+6. Support or Contact。
 </code></pre>
 
 
@@ -55,48 +57,242 @@
 
 
 <h3>
-<a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. First MPI programme for C or C++（Hello world！）</h3>
+<a id="first-c" class="anchor" href="#first-c" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. First MPI programme for C or C++（Hello world！）</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>C+MPI并行程序的程序结构如下图所示，下面分几个部分对它的结构进行介绍：</p>
+<img src="images/mpi.png" width="560" height="620" />
+
+<pre><code>#include "mpi.h"
+#include <stdio.h>
+#include <math.h>
+void main(argc,argv)
+int argc;
+char *argv[];
+{
+int myid, numprocs;
+int namelen;
+char processor_name[MPI_MAX_PROCESSOR_NAME];
+MPI_Init(&argc,&argv);
+MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+MPI_Get_processor_name(processor_name,&namelen);
+fprintf(stderr,"Hello World! Process %d of %d on %s\n",
+myid, numprocs, processor_name);
+MPI_Finalize();
+}
+</code></pre>
+
+<p>第一部分：首先要有MPI相对于C实现的头文件mpi.h，代码见上方所示；</p>
+<p>第二部分：定义程序中所需要的与MPI有关的变量 MPI_MAX_PROCESSOR_NAME是MPI预定义的宏，即某一MPI的具体实现中允许机器名字的最大长度。机器名放在变量
+processor_name中，整型变量myid和numprocs分别用来记录某一个并行执行进程的标识和所有参加计算的进程的个数，namelen是实际得到的机器名字的长度；</p>
+<p>第三部分：MPI程序的开始和结束必须是MPI_Init和MPI_Finalize，分别完成MPI程序的初始化和结束工作。C程序中以 MPI_ 开头，后面的部分第一个字母大写
+而其它的后续部分小写；</p>
+<p>第四部分：MPI程序的程序体，包括各种MPI过程调用语句和C语句。MPI_Comm_rank得到当前正在运行的进程的标识号，放在myid中；MPI_Comm_size得到所有参加运算的进程的个数，放在numprocs中；MPI_Get_processor_name得到本进程运行的机器的名称，结果放在processor_name中，它是一个字符串，而该字符串的长度放namelen中；fprintf语句将本进程的标识号、并行执行的进程的个数、本进程所运行的机器的名字打印出来。和一般的C程序不同的是这些程序体中的执行语句是并行执行的，每一个进程都要执行。不妨指定本程序启动时共产生4个进程同时运行，而运行本程序的机器的机器名为tp5，4个进程都在tp5上运行，其标识分别为0 1 2 3，执行结果如下图所示。虽然这一MPI程序本身只有一条打印语句，但是由于它启动了四个进程同时执行，每个进程都执行打印操作，故而最终的执行结果有四条打印语句。</p>
+<pre><code>$ Hello World! Process 0 of 4 on tp5
+$ Hello World! Process 1 of 4 on tp5
+$ Hello World! Process 3 of 4 on tp5
+$ Hello World! Process 2 of 4 on tp5
+</code></pre>
+<p>代码的编译指令如下：</p>
+<pre><code>$ mpicc –O2 –o hello hello.c //生成hello可执行程序</code></pre>
+
+<p>可执行程序的运行指令如下，但并行程序的提交一律使用PBS脚本提交任务，下述指令仅可用于测试。</p>
+<pre><code>$ mpirun –np 4 ／home/username/hello //运行hello可执行程序
+/*说明 -np 4 表示4个进程； 需使用绝对路径指定可执行程序*/
+</code></pre>
+
+<h3>
+<a id="first-matlab" class="anchor" href="#first-matlab" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. First MPI programme for matlab（Hello world！）</h3>
+
+<p>MatlabMPI是一个Matlab脚本程序包，是MPI的Matlab脚本实现，使得Matlab程序可以在并行计算机上运行。具体使用说明如下：</p>
+<p>1. 复制MatlabMPI到自己用户目录下；</p>
+<p>2. 将MatlabMPI/src目录添加到Matlab路径中 (e.g. 在matlab/startup.m 文件中添加 addpath ~/MatlabMPI/src， 请根据自己的安装目录酌情修改)；</p>
+<p>3. 输入"help MatlabMPI" 获取函数帮助；</p>
+<p>4. 输入 "help function_name" 获取具体函数的帮助；</p>
+<p>5. 打开"examples" 目录；</p>
+<p>6. 打开matlab, 从命令行运行下列程序：</p>
+
+<pre><code>eval( MPI_Run('xbasic', 2,machines) );
+$ eval( MPI_Run('basic', 2,machines) );
+$ eval( MPI_Run('multi_basic',2,machines) );
+$ eval( MPI_Run('probe', 2,machines) );
+$ eval( MPI_Run('speedtest', 2,machines) );
+$ eval( MPI_Run('basic_app', 2,machines) );
+$ eval( MPI_Run('broadcast', 2,machines) );
+$ eval( MPI_Run('blurimage', 2,machines) );
+</code></pre>
+
+<p>MPI_Run有三个参数: MatlabMPI程序名称(不包含.m 后缀), 调用"machines"中节点的数量，节点名称列表。如果用户在MPI_Run中使用N个节点，"machines"列表中有M个节点（M > N）, MPI_Run会调用列表中前N个节点运行程序。</p>
+
+<p>"machines"节点列表格式如下:</p>
+<pre><code>machines = {}; 
+%Run on a local processors.
+
+machines = {'machine1' 'machine2'}) ); 
+%Run on multiprocessors.
+
+machines = {'machine1:dir1' 'machine2:dir2'}) );
+%Run on multiprocessors and communicate via dir1 and dir2,
+%which must be visible to both machines.</code></pre>
+
+<p>下面的代码是在各节点间发送和接收参数的样例程序：</p>
+
+<pre><code>%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Basic Matlab MPI script that
+% sends a matrix to another processor.
+%
+% To run, start Matlab and type:
+%
+%   eval( MPI_Run('basic',2,{}) );
+%
+% Or, to run a different machine type:
+%
+%   eval( MPI_Run('basic',2,{'machine1' 'machine2'}) );
+%
+% Output will be piped into two files:
+%
+%   MatMPI/basic.0.out
+%   MatMPI/basic.1.out
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MatlabMPI
+% Dr. Jeremy Kepner
+% MIT Lincoln Laboratory
+% kepner@ll.mit.edu
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Initialize MPI.
+MPI_Init;
+
+% Create communicator.
+comm = MPI_COMM_WORLD;
+
+% Modify common directory from default for better performance.
+% comm = MatMPI_Comm_dir(comm,'/tmp');
+
+% Uncomment if you want to save the messages that were sent.
+% comm = MatMPI_Save_messages(comm,1);
+
+% Get size and rank.
+comm_size = MPI_Comm_size(comm);
+my_rank = MPI_Comm_rank(comm);
+
+% Print rank.
+disp(['my_rank: ',num2str(my_rank)]);
+
+% Set who is source and who is destination.
+source = 1;
+dest = 0;
+
+% Create a unique tag id for this message (very important in Matlab MPI!).
+tag = 1;
+
+% Check to make sure that we have exactly two processors.
+if(comm_size == 2)
+  % Source.
+  if (my_rank == source)
+    % Create data.
+    data = 1:10;
+    % Send it.
+    MPI_Send( dest, tag, comm, data, data );
+  end
+  % Destination.
+  if (my_rank == dest)
+    % Receive data.
+    [data data1] = MPI_Recv( source, tag, comm );
+    % Check data.
+    if(any((data  - (1:10)) ~= 0))
+      disp('ERROR: incorrect data sent.');
+      exit;
+    end
+  end
+end
+
+% Finalize Matlab MPI.
+MPI_Finalize;
+disp('SUCCESS');
+if (my_rank ~= MatMPI_Host_rank(comm))
+  exit;
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright 2002 Massachusetts Institute of Technology
+% 
+% Permission is herby granted, without payment, to copy, modify, display
+% and distribute this software and its documentation, if any, for any
+% purpose, provided that the above copyright notices and the following
+% three paragraphs appear in all copies of this software.  Use of this
+% software constitutes acceptance of these terms and conditions.
+%
+% IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+% SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
+% THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE
+% POSSIBILITY OF SUCH DAMAGE.
+% 
+% MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING,
+% BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+% FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+%
+% THIS SOFTWARE IS PROVIDED "AS IS," MIT HAS NO OBLIGATION TO PROVIDE
+% MAINTENANCE, SUPPORT, UPDATE, ENHANCEMENTS, OR MODIFICATIONS.
+</code></pre>
 
 
 
 
 <h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. First MPI programme for matlab（Hello world！）</h3>
+<a id="sub-task" class="anchor" href="#sub-task" aria-hidden="true"><span class="octicon octicon-link"></span></a>4. 使用PBS提交任务</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>任务（程序或命令）：可以是用户程序（如C程序），也可以是系统命令下面是一个完整的任务脚本例子，脚本名为 mytask：</p>
+<pre><code>#!/bin/sh //指明所用的 shell
+#PBS –N mytask //设置任务名称
+#PBS -l walltime=1:00:00 //请求任务执行时间
+#PBS -l select=ncpus=4:mem=400mb //请求任务执行所需资源
+#PBS -j oe //设置相关属性(文件合并)
+date /t //系统命令（打印日期时间）
+mpirun –np 4 /home/username/my_application //执行的任务
+			  //(当前名为 my_application的任务)
+date /t // 系统命令（打印日期时间）
+</code></pre>
 
+<p>第 1 行说明所用的 shell；第 2 至5 行是 pbs 指示语句，设置了任务的一些属性，并请求了资源；第 6 至8行是要执行的命令及任务。
+编写完脚本后，使用 qsub 命令提交脚本，在 shell下输入：</p>
 
+<pre><code>$ qsub mytask
+</code></pre>
+
+<p>后敲回车。</p>
+<p>系统会输出一个任务标识符：sequence-number.servername，如 220.cnode01。sequence-number是任务编号，后面需要用这个号查看任务的执行状态，servername
+是 pbs server的名称。</p>
+
+<p>任务提交后，用户如果要知道任务的当前运行状态，可以通过 qstat 命令查询。</p>
+
+<p>任务的状态如下：</p>
+<pre><code>* B 只用于任务向量，表示任务向量已经开始执行
+* E 任务在运行后退出
+* H 任务被服务器或用户或者管理员阻塞
+* Q 任务正在排队中，等待被调度运行
+* R 任务正在运行
+* S 任务被服务器挂起，由于一个更高优先级的任务需要当前任务的资源
+* T 任务被转移到其它执行节点了
+* U 由于服务器繁忙，任务被挂起
+* W 任务在等待它所请求的执行时间的到来(qsub -a)
+* X 只用于子任务，表示子任务完成
+</code></pre>
+
+<h3>
+<a id="task-manager" class="anchor" href="#task-manager" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
+
+<p>取消删除任务</p>
+<pre><code>qdel 93.node1
+</code></pre>
 
 
 <h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>4. 使用PBS提交任务</h3>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>6. Support or Contact</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-
-<h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a id="rather-drive-stick" class="anchor" href="#rather-drive-stick" aria-hidden="true"><span class="octicon octicon-link"></span></a>6. 其他</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-
-
-
-
-
-
-
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="https://help.github.com/pages">https://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Having trouble with Coding or Task Management? Check out the documentation and website on the top of this note or contact <a href="mailto:docurdt@sjtu.edu.cn">with me</a> and I’ll help you sort it out.</p>
       </section>
     </div>
 
