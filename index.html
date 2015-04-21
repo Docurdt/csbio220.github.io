@@ -38,7 +38,7 @@
 
 <pre><code>1. 什么是MPI？
 2. First MPI programme for C or C++（Hello world！）；
-3. First MPI programme for matlab（Hello world！）；
+3. MatlabMPI examples；
 4. 使用PBS提交任务；
 5. 任务查看及管理；
 6. Support or Contact。
@@ -60,7 +60,7 @@
 <a id="first-c" class="anchor" href="#first-c" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. First MPI programme for C or C++（Hello world！）</h3>
 
 <p>C+MPI并行程序的程序结构如下图所示，下面分几个部分对它的结构进行介绍：</p>
-<img src="images/mpi.png" width="560" height="620" />
+<img src="images/mpi.png" width="598" height="620" />
 
 <pre><code>#include "mpi.h"
 #include <stdio.h>
@@ -77,9 +77,19 @@ MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
 MPI_Get_processor_name(processor_name,&namelen);
 fprintf(stderr,"Hello World! Process %d of %d on %s\n",
-myid, numprocs, processor_name);
+	myid, numprocs, processor_name); //打印
 MPI_Finalize();
 }
+
+说明：
+在上述的代码中，执行的用户程序就是打印信息。
+上述代码在编译后，通过设置参数，指定其运行的节点及进程数，它将在不同的节点被执行。
+由于不同节点的名称不同，所以打印出的信息也不相同。
+
+这段程序中，每个进程执行同样的任务，在实际使用中意义不大。我们需要
+相互独立的不同的任务放到不同节点去运行，以提升任务的完成速度。
+这需要根据我们的实际需要，发挥我们的能力去解决，即如何将原有的程序转化成
+并行执行的程序！
 </code></pre>
 
 <p>第一部分：首先要有MPI相对于C实现的头文件mpi.h，代码见上方所示；</p>
@@ -96,23 +106,23 @@ $ Hello World! Process 2 of 4 on tp5
 <p>代码的编译指令如下：</p>
 <pre><code>$ mpicc –O2 –o hello hello.c //生成hello可执行程序</code></pre>
 
-<p>可执行程序的运行指令如下，但并行程序的提交一律使用PBS脚本提交任务，下述指令仅可用于测试。</p>
+<p>可执行程序的运行指令如下，但并行程序的提交一律使用PBS脚本提交任务，下述指令仅可用于测试。详见第四部分的内容。</p>
 <pre><code>$ mpirun –np 4 ／home/username/hello //运行hello可执行程序
 /*说明 -np 4 表示4个进程； 需使用绝对路径指定可执行程序*/
 </code></pre>
 
 <h3>
-<a id="first-matlab" class="anchor" href="#first-matlab" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. First MPI programme for matlab（Hello world！）</h3>
+<a id="first-matlab" class="anchor" href="#first-matlab" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. MatlabMPI examples</h3>
 
-<p>MatlabMPI是一个Matlab脚本程序包，是MPI的Matlab脚本实现，使得Matlab程序可以在并行计算机上运行。具体使用说明如下：</p>
-<p>1. 复制MatlabMPI到自己用户目录下；</p>
+<p>MatlabMPI是一个Matlab脚本程序包，是MPI的Matlab脚本实现，使得Matlab程序可以在并行计算机上运行。下面通过运行其程序包中的例子具体使用说明其使用方法，如有疑问也可以打开其源代码查看，具体如下：</p>
+<p>1. 复制MatlabMPI到自己用户目录下（该文件夹已经在服务器上，路径：/home/mpiuser/MatlabMPI）；</p>
 <p>2. 将MatlabMPI/src目录添加到Matlab路径中 (e.g. 在matlab/startup.m 文件中添加 addpath ~/MatlabMPI/src， 请根据自己的安装目录酌情修改)；</p>
 <p>3. 输入"help MatlabMPI" 获取函数帮助；</p>
 <p>4. 输入 "help function_name" 获取具体函数的帮助；</p>
 <p>5. 打开"examples" 目录；</p>
-<p>6. 打开matlab, 从命令行运行下列程序：</p>
+<p>6. 打开matlab, 从命令行运行下列样例程序：</p>
 
-<pre><code>eval( MPI_Run('xbasic', 2,machines) );
+<pre><code>$ eval( MPI_Run('xbasic', 2,machines) );
 $ eval( MPI_Run('basic', 2,machines) );
 $ eval( MPI_Run('multi_basic',2,machines) );
 $ eval( MPI_Run('probe', 2,machines) );
@@ -120,6 +130,13 @@ $ eval( MPI_Run('speedtest', 2,machines) );
 $ eval( MPI_Run('basic_app', 2,machines) );
 $ eval( MPI_Run('broadcast', 2,machines) );
 $ eval( MPI_Run('blurimage', 2,machines) );
+
+说明：
+因为平台没有界面，可能一些样例程序无法执行。
+这些程序只是告诉大家如何运行一个利用MatlabMPI函数库写好的脚本。
+
+同样的，上述这些指令需要写入到PBS脚本中调用，使用qsub提交任务。
+详见第四部分的内容。
 </code></pre>
 
 <p>MPI_Run有三个参数: MatlabMPI程序名称(不包含.m 后缀), 调用"machines"中节点的数量，节点名称列表。如果用户在MPI_Run中使用N个节点，"machines"列表中有M个节点（M > N）, MPI_Run会调用列表中前N个节点运行程序。</p>
@@ -135,7 +152,7 @@ machines = {'machine1:dir1' 'machine2:dir2'}) );
 %Run on multiprocessors and communicate via dir1 and dir2,
 %which must be visible to both machines.</code></pre>
 
-<p>下面的代码是在各节点间发送和接收参数的样例程序：</p>
+<p>下面是basic脚本的源代码，功能是完成在各节点间发送和接收参数，具体说明见代码中的说明：</p>
 
 <pre><code>%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Basic Matlab MPI script that
@@ -184,7 +201,7 @@ disp(['my_rank: ',num2str(my_rank)]);
 source = 1;
 dest = 0;
 
-% Create a unique tag id for this message (very important in Matlab MPI!).
+% Create a unique tag id for this message(very important in MatlabMPI!).
 tag = 1;
 
 % Check to make sure that we have exactly two processors.
@@ -226,8 +243,9 @@ end
 % software constitutes acceptance of these terms and conditions.
 %
 % IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-% SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
-% THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE
+% SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT 
+% OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF MIT 
+% HAS BEEN ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.
 % 
 % MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING,
