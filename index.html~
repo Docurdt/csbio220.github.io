@@ -266,7 +266,11 @@ date /t // 系统命令（打印日期时间）
 <p>系统会输出一个任务标识符：sequence-number.servername，如 220.cnode01。sequence-number是任务编号，后面需要用这个号查看任务的执行状态，servername
 是 pbs server的名称。</p>
 
-<p>任务提交后，用户如果要知道任务的当前运行状态，可以通过 qstat 命令查询。</p>
+
+
+<h3>
+<a id="task-manager" class="anchor" href="#task-manager" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
+<p>任务提交后，用户如果要知道任务的当前运行状态，可以通过 qstat 命令+任务标识符查询。</p>
 
 <p>任务的状态如下：</p>
 <pre><code>* B 只用于任务向量，表示任务向量已经开始执行
@@ -280,17 +284,13 @@ date /t // 系统命令（打印日期时间）
 * W 任务在等待它所请求的执行时间的到来(qsub -a)
 * X 只用于子任务，表示子任务完成
 </code></pre>
-
-<h3>
-<a id="task-manager" class="anchor" href="#task-manager" aria-hidden="true"><span class="octicon octicon-link"></span></a>5. 任务查看及管理</h3>
-
 <p>取消删除任务</p>
 <pre><code>qdel 93.node1
 </code></pre>
 
 
 <h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>6. Support or Contact</h3>
 
 <p>Having trouble with Coding or Task Management? Check out the documentation and website on the top of this note or contact <a href="mailto:docurdt@sjtu.edu.cn">with me</a> and I’ll help you sort it out.</p>
       </section>
