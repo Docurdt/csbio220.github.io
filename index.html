@@ -271,12 +271,14 @@ end
 <pre><code>#!/bin/bash //指明所用的 shell
 #PBS –N mytask //设置任务名称
 #PBS -l walltime=1:00:00 //请求任务执行时间
-#PBS -l select=ncpus=4:mem=400mb //请求任务执行所需资源
+#PBS -l nodes=1:ppn=16 //请求任务执行所需资源:1个节点，每个节点：32个cpu.
 #PBS -e /home/username/Jobname.err //定义输出运行过程中的错误信息路径
 #PBS -o /home/username/Jobname.out //定义输出信息路径
 date  //系统命令（打印日期时间）
 ##mpirun –np 4 /home/username/my_application //执行的任务 for c/c++
 					//(当前名为 my_application的任务)
+
+export LC_ALL="C" //执行MATLAB程序时添加这一句话指令
 matlab < helloworld.m    //执行MATLAB程序
 			  
 date  // 系统命令（打印日期时间）
