@@ -117,148 +117,77 @@ $ Hello World! Process 2 of 4 on tp5
 </code></pre>
 
 <h3>
-<a id="first-matlab" class="anchor" href="#first-matlab" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. MatlabMPI examples</h3>
+<a id="first-matlab" class="anchor" href="#first-matlab" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. MatlabMPI 使用流程</h3>
 
 <p>MatlabMPI是一个Matlab脚本程序包，是MPI的Matlab脚本实现，使得Matlab程序可以在并行计算机上运行。下面通过运行其程序包中的例子具体使用说明其使用方法，如有疑问也可以打开其源代码查看，具体如下：</p>
 <p>1. 复制MatlabMPI到自己用户目录下（该文件夹已经在服务器上，路径：/home/mpiuser/MatlabMPI）；</p>
-<p>2. 将MatlabMPI/src目录添加到Matlab路径中 (e.g. 在matlab/startup.m 文件中添加 addpath ~/MatlabMPI/src， 请根据自己的安装目录酌情修改)；</p>
-<p>3. 输入"help MatlabMPI" 获取函数帮助；</p>
-<p>4. 输入 "help function_name" 获取具体函数的帮助；</p>
-<p>5. 打开"examples" 目录；</p>
-<p>6. 打开matlab, 从命令行运行下列样例程序：</p>
+<p>2. 以运行Helloworld.m为例讲解运行方法；</p>
+<p>3. 首先Helloworld.m是使用并行编程的思想编写；</p>
+<p>4. 为了配合运行Helloworld.m，我们需要修改两个脚本模板：task和matlabTask.m。模板的详细内容在下文会列出；</p>
+<p>5. 修改完成后，qsub task 提交任务；</p>
+<p>6. 使用qstat xxx，查看编号为xxx的任务状态。</p>
 
-<pre><code>$ eval( MPI_Run('xbasic', 2,machines) );
-$ eval( MPI_Run('basic', 2,machines) );
-$ eval( MPI_Run('multi_basic',2,machines) );
-$ eval( MPI_Run('probe', 2,machines) );
-$ eval( MPI_Run('speedtest', 2,machines) );
-$ eval( MPI_Run('basic_app', 2,machines) );
-$ eval( MPI_Run('broadcast', 2,machines) );
-$ eval( MPI_Run('blurimage', 2,machines) );
+
+<p> </p>
+<p> task脚本模板</p>
+<pre><code>  1 #!/bin/sh
+  2 #PBS -N JobName
+  3 #PBS -l walltime=24:00:00
+  4 #PBS -l nodes=3:ppn=16
+  5 #PBS -d /home/username/workspace
+  6 #PBS -e /home/username/workspace/output/$PBS_JOBID.err
+  7 #PBS -o /home/username/workspace/output/$PBS_JOBID.out
+  8 date
+  9 export LC_ALL="C"
+ 10 matlab < matlabTask.m
+ 11 date
+
 
 说明：
-因为平台没有界面，可能一些样例程序无法执行。
-这些程序只是告诉大家如何运行一个利用MatlabMPI函数库写好的脚本。
-
-同样的，上述这些指令需要写入到PBS脚本中调用，使用qsub提交任务。
-详见第四部分的内容。
+在上述代码中，第二行定义任务名称；
+第三行设置程序运行的最长时间；
+第四行设置需要的节点数，示例中为3＊16=48个CPU；
+第五行设置程序路径；
+第六行和第七行设置错误信息和输出信息的输出路径；
+第八行和第十一行打印当前时间；
 </code></pre>
 
-<p>MPI_Run有三个参数: MatlabMPI程序名称(不包含.m 后缀), 调用"machines"中节点的数量，节点名称列表。如果用户在MPI_Run中使用N个节点，"machines"列表中有M个节点（M > N）, MPI_Run会调用列表中前N个节点运行程序。</p>
 
-<p>"machines"节点列表格式如下:</p>
-<pre><code>machines = {}; 
-%Run on a local processors.
+<p> </p>
+<p> matlabTask.m脚本模板</p>
+<pre><code>  1 addpath(genpath('~/workspace/MatlabMPI/src'));
+  2 MPI_Abort;
+  3 MatMPI_Delete_all();
+  4 [n,machines]=MPI_Getnodes;
+  5 eval( MPI_Run('Helloworld',n,machines));
+  6 disp('success!');
+  7 exit
 
-machines = {'machine1' 'machine2'}) ); 
-%Run on multiprocessors.
+说明：
+在上述代码中，第一行添加函数库路径；
+第二三行为MatlabMPI的初始化函数；
+第四行获取当前分配的节点及节点数目；
+第五行调用Helloworld.m；
+第六行和第七行打印提示信息和退出。
+</code></pre>
 
-machines = {'machine1:dir1' 'machine2:dir2'}) );
-%Run on multiprocessors and communicate via dir1 and dir2,
-%which must be visible to both machines.</code></pre>
+<p> </p>
 
-<p>下面是basic脚本的源代码，功能是完成在各节点间发送和接收参数，具体说明见代码中的说明：</p>
+<p>下面是Helloworld.m代码，功能是将10次的循环分解，并发执行，具体说明见代码中的说明：</p>
 
-<pre><code>%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Basic Matlab MPI script that
-% sends a matrix to another processor.
-%
-% To run, start Matlab and type:
-%
-%   eval( MPI_Run('basic',2,{}) );
-%
-% Or, to run a different machine type:
-%
-%   eval( MPI_Run('basic',2,{'machine1' 'machine2'}) );
-%
-% Output will be piped into two files:
-%
-%   MatMPI/basic.0.out
-%   MatMPI/basic.1.out
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% MatlabMPI
-% Dr. Jeremy Kepner
-% MIT Lincoln Laboratory
-% kepner@ll.mit.edu
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Initialize MPI.
-MPI_Init;
-
-% Create communicator.
-comm = MPI_COMM_WORLD;
-
-% Modify common directory from default for better performance.
-% comm = MatMPI_Comm_dir(comm,'/tmp');
-
-% Uncomment if you want to save the messages that were sent.
-% comm = MatMPI_Save_messages(comm,1);
-
-% Get size and rank.
-comm_size = MPI_Comm_size(comm);
-my_rank = MPI_Comm_rank(comm);
-
-% Print rank.
-disp(['my_rank: ',num2str(my_rank)]);
-
-% Set who is source and who is destination.
-source = 1;
-dest = 0;
-
-% Create a unique tag id for this message(very important in MatlabMPI!).
-tag = 1;
-
-% Check to make sure that we have exactly two processors.
-if(comm_size == 2)
-  % Source.
-  if (my_rank == source)
-    % Create data.
-    data = 1:10;
-    % Send it.
-    MPI_Send( dest, tag, comm, data, data );
-  end
-  % Destination.
-  if (my_rank == dest)
-    % Receive data.
-    [data data1] = MPI_Recv( source, tag, comm );
-    % Check data.
-    if(any((data  - (1:10)) ~= 0))
-      disp('ERROR: incorrect data sent.');
-      exit;
-    end
-  end
-end
-
-% Finalize Matlab MPI.
-MPI_Finalize;
-disp('SUCCESS');
-if (my_rank ~= MatMPI_Host_rank(comm))
-  exit;
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright 2002 Massachusetts Institute of Technology
-% 
-% Permission is herby granted, without payment, to copy, modify, display
-% and distribute this software and its documentation, if any, for any
-% purpose, provided that the above copyright notices and the following
-% three paragraphs appear in all copies of this software.  Use of this
-% software constitutes acceptance of these terms and conditions.
-%
-% IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-% SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT 
-% OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF MIT 
-% HAS BEEN ADVISED OF THE
-% POSSIBILITY OF SUCH DAMAGE.
-% 
-% MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING,
-% BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
-% FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-%
-% THIS SOFTWARE IS PROVIDED "AS IS," MIT HAS NO OBLIGATION TO PROVIDE
-% MAINTENANCE, SUPPORT, UPDATE, ENHANCEMENTS, OR MODIFICATIONS.
+<pre><code> 下面的代码会被每个进程执行一遍，循环模块根据当前rank号和循环变量决定是否执行。 
+  1 MPI_Init; %MPI初始化
+  2 comm = MPI_COMM_WORLD; %获取MPI环境变量，comm为一个结构体
+  3 comm_size = MPI_Comm_size(comm); % 总进程数
+  4 my_rank = MPI_Comm_rank(comm); %获取当前进程编号
+  5 for i = 1:10	 %此循环10次，根据当前进程编号以及循环变量确定是否执行。
+  6 	if mod(i,comm_size) ~= my_rank  
+  7         continue;
+  8     end
+  9 	%%你的并行程序加到这下面%%
+ 10	...
+ 11 end
+ 12 MPI_Finalize;
 </code></pre>
 
 
@@ -272,14 +201,11 @@ end
 #PBS –N mytask //设置任务名称
 #PBS -l walltime=1:00:00 //请求任务执行时间
 #PBS -l nodes=1:ppn=16 //请求任务执行所需资源:1个节点，每个节点：32个cpu.
-#PBS -e /home/username/Jobname.err //定义输出运行过程中的错误信息路径
-#PBS -o /home/username/Jobname.out //定义输出信息路径
+#PBS -e /home/username/$PBS_JOBID.err //定义输出运行过程中的错误信息路径
+#PBS -o /home/username/$PBS_JOBID.out //定义输出信息路径
 date  //系统命令（打印日期时间）
-##mpirun –np 4 /home/username/my_application //执行的任务 for c/c++
+mpirun –np 4 /home/username/my_application //执行的任务 for c/c++
 					//(当前名为 my_application的任务)
-
-##export LC_ALL="C" //执行MATLAB程序时添加这一句话指令
-matlab < helloworld.m    //执行MATLAB程序
 			  
 date  // 系统命令（打印日期时间）
 </code></pre>
