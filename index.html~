@@ -33,12 +33,35 @@
         <h3>
 <a id="main-contents" class="anchor" href="#main-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>主要内容</h3>
 
+<p>本笔记处于不断更新过程中，遇到问题时，请首先到这里查阅，谢谢！</p>
+
 <p>这篇笔记对MPI并行编程和PBS任务管理系统的使用做简单的介绍，这篇笔记的书写离不开都志辉博士编写的《高性能计算之并行编程技术》以及Parallel Programming with MatlabMPI(by Dr. Jeremy Kepner), 在此向他们表示感谢！</p>
+
 <p>服务器使用过程中必须的基本知识：
 <pre><code>1. vim的基本使用；
 2. 常用Linux指令及Linux文件目录管理；
 </code></pre>
 </p>
+
+
+<p>服务器使用过程中的程序调试：
+<pre><code>1. 关注自己程序所需要的内存，内存不足时请指定内存大小；
+2. matlab程序在运行结束后可能不能自己关闭，请在程序后面添加exit，
+   使程序在执行完毕后正常退出；
+3. 当发现提交的任务不正常退出时，请使用top指令观察内存中是否有未结
+   束的程序驻留，使用matlab < MPI_Abort.m 杀掉残留进程；
+4. 每个MatlabMPI的程序都需要在当前目录下生成一个MatMPI的文件夹来存
+   放当前环境变量，因此当有多个并行的Matlab程序时，请将其存放在不同
+   文件夹中。
+</code></pre>
+</p>
+
+
+
+
+
+
+
 <p>书写过程中难免有错误的地方，欢迎大家fork my repo。下面是笔记的主要内容:</p>
 
 <pre><code>1. 什么是MPI？
@@ -134,22 +157,24 @@ $ Hello World! Process 2 of 4 on tp5
   2 #PBS -N JobName
   3 #PBS -l walltime=24:00:00
   4 #PBS -l nodes=3:ppn=16
-  5 #PBS -d /home/username/workspace
-  6 #PBS -e /home/username/workspace/output/$PBS_JOBID.err
-  7 #PBS -o /home/username/workspace/output/$PBS_JOBID.out
-  8 date
-  9 export LC_ALL="C"
- 10 matlab < matlabTask.m
- 11 date
+  5 #PBS -l pmem=600mb
+  6 #PBS -d /home/username/workspace
+  7 #PBS -e /home/username/workspace/output/$PBS_JOBID.err
+  8 #PBS -o /home/username/workspace/output/$PBS_JOBID.out
+  9 date
+ 10 export LC_ALL="C"
+ 11 matlab < matlabTask.m
+ 12 date
 
 
 说明：
 在上述代码中，第二行定义任务名称；
 第三行设置程序运行的最长时间；
 第四行设置需要的节点数，示例中为3＊16=48个CPU；
-第五行设置程序路径；
-第六行和第七行设置错误信息和输出信息的输出路径；
-第八行和第十一行打印当前时间；
+第五行指定每个进程需要的内存大小；
+第六行设置程序路径；
+第七行和第八行设置错误信息和输出信息的输出路径；
+第九行和第十二行打印当前时间；
 </code></pre>
 
 
